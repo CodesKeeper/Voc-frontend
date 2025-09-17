@@ -624,12 +624,15 @@ a {
   border: 1px solid var(--border-color);
   border-radius: 4px;
   box-sizing: border-box;
-  color: var(--button-text-color);
+  color: var(--button-text-color); 
+  caret-color: var(--text-color); /* 输入框中光标颜色 */
 }
 
 .note-input::placeholder {
-  color: var(--text-color);
+  color: var(--text-color); /* 输入框中提示文本颜色 */
 }
+
+
 
 .action-btn {
   margin: 0 4px;
@@ -666,6 +669,10 @@ span {
     display: flex;
     gap: 8px;
     align-items: center;
+}
+
+.search-control {
+    caret-color: var(--text-color);
 }
 
 .search-input::placeholder {
