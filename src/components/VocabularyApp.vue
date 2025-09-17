@@ -128,9 +128,9 @@ const difficultWords = ref([]);
 const currentTab = ref('all');
 const sortMethods = ref({
     all: 'import',
-    mastered: 'import',
-    multiMeaning: 'import',
-    difficult: 'import'
+    mastered: 'addTime',
+    multiMeaning: 'addTime',
+    difficult: 'addTime'
 });
 const isDarkTheme = ref(false);
 const searchQuery = ref('');
@@ -147,6 +147,7 @@ const tabs = [
 const sortOptions = [
     { value: 'alphabet', label: '字母' },
     { value: 'import', label: 'ID' },
+    { value: 'addTime', label: '添加时间' },
     { value: 'random', label: '随机' }
 ];
 
@@ -309,6 +310,27 @@ const currentWords = computed(() => {
             return words.sort((a, b) => a.id - b.id);
         case 'alphabet':
             return words.sort((a, b) => a.word.localeCompare(b.word));
+        case 'addTime':
+            // 按添加时间排序：有时间戳的在前，按时间戳降序；没有时间戳的在后，按ID排序
+            return words.sort((a, b) => {
+                const aTime = a.addedToCategory || 0;
+                const bTime = b.addedToCategory || 0;
+                
+                // 如果都有时间戳，按时间戳降序（新的在前）
+                if (aTime && bTime) {
+                    return bTime - aTime;
+                }
+                // 如果只有a有时间戳，a在前
+                if (aTime && !bTime) {
+                    return -1;
+                }
+                // 如果只有b有时间戳，b在前
+                if (!aTime && bTime) {
+                    return 1;
+                }
+                // 如果都没有时间戳，按ID排序
+                return a.id - b.id;
+            });
         case 'random':
             // 使用Fisher-Yates洗牌算法进行随机排序
             for (let i = words.length - 1; i > 0; i--) {
@@ -318,7 +340,6 @@ const currentWords = computed(() => {
             return words;
         default:
             return words;
-        debouncedSave();
     }
     
 });
@@ -371,11 +392,28 @@ const moveWord = (word, target) => {
 
     const movedWord = removeFromArray(sourceArray, word.id);
     if (movedWord) {
-        // 保持单词的模糊状态
-        targetArray.push({
-        ...movedWord,
-        isBlurred: movedWord.isBlurred
-        });
+        const updatedWord = {
+            ...movedWord,
+            isBlurred: movedWord.isBlurred
+        };
+        
+        // 如果是从"全部"移动到其他分类，添加时间戳
+        if (currentTab.value === 'all' && target !== 'all') {
+            updatedWord.addedToCategory = Date.now();
+        }
+        // 如果是从其他分类移回"全部"，清除时间戳
+        else if (currentTab.value !== 'all' && target === 'all') {
+            delete updatedWord.addedToCategory;
+        }
+        
+        // 根据是否有时间戳决定插入位置
+        if (updatedWord.addedToCategory && target !== 'all') {
+            // 有时间戳的插入到开头（最新的在最上面）
+            targetArray.unshift(updatedWord);
+        } else {
+            // 没有时间戳的添加到末尾
+            targetArray.push(updatedWord);
+        }
     }
     
     debouncedSave();
