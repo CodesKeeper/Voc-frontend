@@ -76,6 +76,7 @@
                             <div class="action-cell">
                                 <template v-if="currentTab === 'all'">
                                     <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
+                                    <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
                                     <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
                                     </template>
                                     <template v-else>
@@ -122,11 +123,13 @@ const props = defineProps({
 const allWords = ref([]);
 window.allWords = allWords;
 const masteredWords = ref([]);
+const multiMeaningWords = ref([]);
 const difficultWords = ref([]);
 const currentTab = ref('all');
 const sortMethods = ref({
     all: 'import',
     mastered: 'import',
+    multiMeaning: 'import',
     difficult: 'import'
 });
 const isDarkTheme = ref(false);
@@ -136,6 +139,7 @@ const searchQuery = ref('');
 const tabs = [
     { id: 'all', name: '全部' },
     { id: 'mastered', name: '熟记' },
+    { id: 'multiMeaning', name: '多义' },
     { id: 'difficult', name: '难记' }
 ];
 
@@ -161,6 +165,7 @@ const loadDataFromBackend = async () => {
     // 初始化数据（确保结构正确）
     allWords.value = data.allWords || [];
     masteredWords.value = data.masteredWords || [];
+    multiMeaningWords.value = data.multiMeaningWords || [];
     difficultWords.value = data.difficultWords || [];
     
     console.log('数据加载成功');
@@ -185,6 +190,7 @@ const saveToBackend = async () => {
   const state = {
     allWords: allWords.value,
     masteredWords: masteredWords.value,
+    multiMeaningWords: multiMeaningWords.value,
     difficultWords: difficultWords.value,
     sortMethods: sortMethods.value
   };
@@ -219,6 +225,9 @@ const toggleBlurAll = () => {
         case 'mastered':
             currentWords = masteredWords.value;
             break;
+        case 'multiMeaning':
+            currentWords = multiMeaningWords.value;
+            break;
         case 'difficult':
             currentWords = difficultWords.value;
             break;
@@ -248,6 +257,9 @@ const isCurrentTabMostlyBlurred = computed(() => {
         case 'mastered':
             words = masteredWords.value;
             break;
+        case 'multiMeaning':
+            words = multiMeaningWords.value;
+            break;
         case 'difficult':
             words = difficultWords.value;
             break;
@@ -272,6 +284,9 @@ const currentWords = computed(() => {
     switch (tab) {
         case 'mastered':
             words = [...masteredWords.value];
+            break;
+        case 'multiMeaning':
+            words = [...multiMeaningWords.value];
             break;
         case 'difficult':
             words = [...difficultWords.value];
@@ -331,17 +346,27 @@ const moveWord = (word, target) => {
 
     switch (currentTab.value) {
         case 'all':
-        sourceArray = allWords.value;
-        targetArray = target === 'mastered' ? masteredWords.value : difficultWords.value;
-        break;
+            sourceArray = allWords.value;
+            if (target === 'mastered') {
+                targetArray = masteredWords.value;
+            } else if (target === 'multiMeaning') {
+                targetArray = multiMeaningWords.value;
+            } else {
+                targetArray = difficultWords.value;
+            }
+            break;
         case 'mastered':
-        sourceArray = masteredWords.value;
-        targetArray = allWords.value;
-        break;
+            sourceArray = masteredWords.value;
+            targetArray = allWords.value;
+            break;
+        case 'multiMeaning':
+            sourceArray = multiMeaningWords.value;
+            targetArray = allWords.value;
+            break;
         case 'difficult':
-        sourceArray = difficultWords.value;
-        targetArray = allWords.value;
-        break;
+            sourceArray = difficultWords.value;
+            targetArray = allWords.value;
+            break;
     }
 
     const movedWord = removeFromArray(sourceArray, word.id);
@@ -390,6 +415,7 @@ watch(
     // 只提取所有单词的note字段组成依赖数组
     ...allWords.value.map(w => w.note),
     ...masteredWords.value.map(w => w.note),
+    ...multiMeaningWords.value.map(w => w.note),
     ...difficultWords.value.map(w => w.note)
   ],
   () => {
@@ -402,6 +428,7 @@ watch(
 const handleImport = (data) => {
     allWords.value = data.allWords;
     masteredWords.value = data.masteredWords;
+    multiMeaningWords.value = data.multiMeaningWords || [];
     difficultWords.value = data.difficultWords;
 };
 
@@ -485,11 +512,11 @@ a {
   }
   /* 备注列占2份 */
   &:nth-child(3) {
-    flex: 4;
+    flex: 3.5;
   }
-  /* 操作列占1份（最窄，通常只有按钮） */
+  /* 操作列占1.5份（增加宽度以适应三个按钮） */
   &:nth-child(4) {
-    flex: 1;
+    flex: 1.5;
   }
 }
 
@@ -531,11 +558,11 @@ a {
 }
 
 .note-cell {
-    flex: 4;
+    flex: 3.5;
 }
 
 .action-cell {
-    flex: 1;
+    flex: 1.5;
 }
 
 
@@ -726,6 +753,8 @@ input:focus, select:focus {
     justify-content: space-between;
     align-items: center;
     padding: 0 20px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 /* 现代标签页 */
@@ -736,6 +765,7 @@ input:focus, select:focus {
     background-color: var(--tab-bg-color);
     border-radius: 10px;
     font-size: 40px;
+    flex-shrink: 0;
 }
 
 .tabs button {
@@ -748,12 +778,14 @@ input:focus, select:focus {
     transition: all 0.3s ease;
     font-weight: 500;
     box-shadow: none;
+    white-space: nowrap;
 }
 
 .controls {
     display: flex;
     align-items: center;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .theme-toggle {
@@ -903,5 +935,108 @@ td input {
 
 .search-btn{
     margin-left: 10px;
+}
+
+/* 响应式设计 - 小屏幕优化 */
+@media (max-width: 1024px) {
+    .nav-bar-content {
+        flex-direction: column;
+        gap: 15px;
+        padding: 15px 10px;
+    }
+    
+    .tabs {
+        order: 1;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .controls {
+        order: 2;
+        width: 100%;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+    
+    .vocabulary-app {
+        padding-top: 120px; /* 增加顶部间距适应更高的导航栏 */
+    }
+}
+
+@media (max-width: 768px) {
+    .nav-bar-content {
+        padding: 10px 5px;
+    }
+    
+    .tabs button {
+        padding: 8px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+    }
+    
+    .import-export-buttons,
+    .sort-controls,
+    .search-control {
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .vocabulary-app {
+        padding-top: 160px; /* 进一步增加顶部间距 */
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .word-table-container {
+        overflow-x: auto; /* 添加水平滚动 */
+        min-width: 600px; /* 设置最小宽度 */
+    }
+    
+    .action-btn {
+        margin: 0 1px;
+        padding: 2px 4px;
+        font-size: 0.8rem;
+    }
+    
+    .note-input {
+        padding: 4px 6px;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .tabs {
+        gap: 4px;
+        padding: 8px;
+    }
+    
+    .tabs button {
+        padding: 6px 8px;
+        font-size: 0.8rem;
+    }
+    
+    .action-btn {
+        margin: 0;
+        padding: 2px 3px;
+        font-size: 0.7rem;
+    }
+    
+    .word-row {
+        height: 50px;
+    }
+    
+    .virtual-scroller {
+        height: 600px;
+    }
+    
+    .vocabulary-app {
+        padding-top: 180px;
+    }
 }
 </style>
