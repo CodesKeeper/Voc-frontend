@@ -57,7 +57,7 @@
                 <div class="table-header">
                     <div class="header-cell">单词</div>
                     <div class="header-cell">释义</div>
-                    <div class="header-cell">注记</div>
+                    <div class="header-cell">助记</div>
                     <div class="header-cell">操作</div>
                 </div>
 
@@ -71,25 +71,32 @@
                                 {{ word.meaning }}
                             </div>
                             <div class="note-cell">
-                                <input type="text" v-model="word.note" placeholder="添加注记..." class="note-input">
+                                <input type="text" v-model="word.note" placeholder="添加助记..." class="note-input">
                             </div>
                             <div class="action-cell">
                                 <template v-if="currentTab === 'all'">
                                     <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
                                     <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
                                     <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
-                                    </template>
-                                    <template v-else>
+                                </template>
+                                <template v-else-if="currentTab === 'mastered'">
+                                    <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
+                                    <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
+                                    <button @click="moveWord(word, 'all')" title="移回全部" class="action-btn">↩</button>
+                                </template>
+                                <template v-else-if="currentTab === 'multiMeaning'">
+                                    <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
+                                    <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
+                                    <button @click="moveWord(word, 'all')" title="移回全部" class="action-btn">↩</button>
+                                </template>
+                                <template v-else>
+                                    <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
+                                    <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
                                     <button @click="moveWord(word, 'all')" title="移回全部" class="action-btn">↩</button>
                                 </template>
                             </div>
                         </div>
                     </template>
-                    
-                    <!-- 空状态 -->
-                    <!-- <template #empty>
-                        <div class="empty-state">没有单词数据</div>
-                    </template> -->
                 </RecycleScroller>
             </div>
         </div>
@@ -147,7 +154,7 @@ const tabs = [
 const sortOptions = [
     { value: 'alphabet', label: '字母' },
     { value: 'import', label: 'ID' },
-    { value: 'addTime', label: '添加时间' },
+    { value: 'addTime', label: '时间' },
     { value: 'random', label: '随机' }
 ];
 
@@ -378,15 +385,33 @@ const moveWord = (word, target) => {
             break;
         case 'mastered':
             sourceArray = masteredWords.value;
-            targetArray = allWords.value;
+            if (target === 'difficult') {
+                targetArray = difficultWords.value;
+            } else if (target === 'multiMeaning') {
+                targetArray = multiMeaningWords.value;
+            } else {
+                targetArray = allWords.value;
+            }
             break;
         case 'multiMeaning':
             sourceArray = multiMeaningWords.value;
-            targetArray = allWords.value;
+            if (target === 'mastered') {
+                targetArray = masteredWords.value;
+            } else if (target === 'difficult') {
+                targetArray = difficultWords.value;
+            } else {
+                targetArray = allWords.value;
+            }
             break;
         case 'difficult':
             sourceArray = difficultWords.value;
-            targetArray = allWords.value;
+            if (target === 'mastered') {
+                targetArray = masteredWords.value;
+            } else if (target === 'multiMeaning') {
+                targetArray = multiMeaningWords.value;
+            } else {
+                targetArray = allWords.value;
+            }
             break;
     }
 
@@ -404,6 +429,10 @@ const moveWord = (word, target) => {
         // 如果是从其他分类移回"全部"，清除时间戳
         else if (currentTab.value !== 'all' && target === 'all') {
             delete updatedWord.addedToCategory;
+        }
+        // 如果是在分类之间移动（比如从熟记移动到难记或多义），更新时间戳
+        else if (currentTab.value !== 'all' && target !== 'all') {
+            updatedWord.addedToCategory = Date.now();
         }
         
         // 根据是否有时间戳决定插入位置
