@@ -855,6 +855,21 @@ input:focus, select:focus {
     white-space: nowrap;
 }
 
+/* 激活状态的标签页样式 */
+.tabs button.active {
+    background-color: var(--primary-color, #007bff);
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+/* 标签页悬浮状态 */
+.tabs button:hover:not(.active) {
+    background-color: color-mix(in srgb, var(--primary-color, #007bff), transparent 85%);
+    color: var(--primary-color, #007bff);
+}
+
 .controls {
     display: flex;
     align-items: center;
