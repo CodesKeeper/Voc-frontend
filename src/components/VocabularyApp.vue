@@ -3,51 +3,51 @@
         <nav class="nav-bar" style="top: 0;">
             <div class="nav-bar-content">
                 <div class="tabs">
-                <button 
-                    v-for="tab in tabs"
-                    :key="tab.id"
-                    :class="{ active: currentTab === tab.id }"
-                    @click="currentTab = tab.id"
-                >
-                    {{ tab.name }}
-                </button>
+                    <button 
+                        v-for="tab in tabs"
+                        :key="tab.id"
+                        :class="{ active: currentTab === tab.id }"
+                        @click="currentTab = tab.id"
+                    >
+                        {{ tab.name }}
+                    </button>
                 </div>
                 <div class="controls">
-                <div class="import-export-buttons">
-                    <button class="import-export-btn">
-                        <RouterLink to="/convert">格式转换</RouterLink>
-                    </button>
-                    <ExportBtn :allWords="allWords" :masteredWords="masteredWords" :difficultWords="difficultWords"/>
-                    <ImportBtn @import-all-data="handleImport"/>
-                </div>
-                <div class="sort-controls">
-                    <CustomSelect
-                        v-model="sortMethods[currentTab]"
-                        :options="sortOptions"
-                        placeholder="排序方式"
-                        @change="handleSort"
-                    />
-                
-                    <button class="blur-toggle-btn" @click="toggleBlurAll" title="切换模糊状态">
-                        {{ isCurrentTabMostlyBlurred ? '清晰' : '模糊' }}
-                    </button>
-                </div>
-                <div class="search-control">
-                    <input
-                    v-model="searchQuery"
-                    type="text"
-                    placeholder="搜索单词..."
-                    class="search-input"
-                    @keyup.enter="handleSearch"
-                    />
-                    <button class="search-btn" @click="handleSearch">搜索</button>
-                </div>
-                <ThemeToggle />
-                <!-- <transition name="fade">
-                    <div class="word-count" v-if="$route.path === '/' && wordCount > 0">
-                    📚 当前标签页单词数：{{ wordCount }}
+                    <div class="import-export-buttons">
+                        <button class="import-export-btn">
+                            <RouterLink to="/convert">格式转换</RouterLink>
+                        </button>
+                        <ExportBtn :allWords="allWords" :masteredWords="masteredWords" :difficultWords="difficultWords"/>
+                        <ImportBtn @import-all-data="handleImport"/>
                     </div>
-                </transition> -->
+                    <div class="sort-controls">
+                        <CustomSelect
+                            v-model="sortMethods[currentTab]"
+                            :options="sortOptions"
+                            placeholder="排序方式"
+                            @change="handleSort"
+                        />
+                    
+                        <button class="blur-toggle-btn" @click="toggleBlurAll" title="切换模糊状态">
+                            {{ isCurrentTabMostlyBlurred ? '清晰' : '模糊' }}
+                        </button>
+                    </div>
+                    <div class="search-control">
+                        <input
+                        v-model="searchQuery"
+                        type="text"
+                        placeholder="搜索单词..."
+                        class="search-input"
+                        @keyup.enter="handleSearch"
+                        />
+                        <button class="search-btn" @click="handleSearch">搜索</button>
+                    </div>
+                    <ThemeToggle />
+                    <!-- <transition name="fade">
+                        <div class="word-count" v-if="$route.path === '/' && wordCount > 0">
+                        📚 当前标签页单词数：{{ wordCount }}
+                        </div>
+                    </transition> -->
                 </div>
             </div>
         </nav>
@@ -104,7 +104,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { RecycleScroller } from 'vue-virtual-scroller';
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css';
 import CustomSelect from './CustomSelect.vue';
@@ -142,6 +142,9 @@ const sortMethods = ref({
 const isDarkTheme = ref(false);
 const searchQuery = ref('');
 
+// 添加数据加载状态标志
+const isLoadingData = ref(false);
+
 // 标签页配置
 const tabs = [
     { id: 'all', name: '全部' },
@@ -160,6 +163,9 @@ const sortOptions = [
 
 // 从后端加载最新数据1.0
 const loadDataFromBackend = async () => {
+  // 设置加载状态，防止watch监听器在数据加载期间触发保存
+  isLoadingData.value = true;
+  
   try {
     // 调用Flask后端API
     const response = await fetch('http://localhost:5000/api/words');
@@ -177,13 +183,26 @@ const loadDataFromBackend = async () => {
     difficultWords.value = data.difficultWords || [];
     
     console.log('数据加载成功');
+    
+    // 使用 nextTick 确保所有响应式数据更新完成后再重置加载状态
+    // 这样可以防止 watch 监听器在数据加载期间被触发
+    await nextTick();
+    isLoadingData.value = false;
   } catch (err) {
     console.error('加载数据失败:', err);
-    alert('加载数据失败，请在PyCharm中启动服务器！');
-    // 可选：加载失败时使用默认数据
-    allWords.value = [
-    //   { id: 1, word: 'example', meaning: '例子', isBlurred: false, note: '' }
-    ];
+    
+    // 显示确认对话框，询问用户是否重新加载
+    const shouldRetry = confirm('加载数据失败，请确保后端服务器已启动。\n\n点击"确定"重新加载数据，点击"取消"继续使用当前数据。');
+    
+    if (shouldRetry) {
+      // 用户选择重新加载，递归调用加载函数
+      loadDataFromBackend();
+      return; // 重要：返回，不执行后面的代码
+    } else {
+      // 用户选择取消，保持当前数据状态，不清空数据
+      // 重置加载状态，让用户可以继续使用当前的数据
+      isLoadingData.value = false;
+    }
   }
 };
 
@@ -220,6 +239,13 @@ const saveToBackend = async () => {
     console.log('数据保存成功:', result.message);
   } catch (err) {
     console.error('保存数据失败:', err);
+    // 弹窗提示用户保存失败，点击确定刷新页面
+    const shouldRefresh = confirm(`保存数据失败：${err.message}\n\n请检查后端服务器是否正常运行。`);
+    
+    if (shouldRefresh) {
+      // 用户点击确定，刷新页面
+      window.location.reload();
+    }
   }
 };
 
@@ -486,7 +512,10 @@ watch(
     ...difficultWords.value.map(w => w.note)
   ],
   () => {
-    debouncedSave();
+    // 只有在不是数据加载状态时才触发保存
+    if (!isLoadingData.value) {
+      debouncedSave();
+    }
   },
   { deep: false } // 无需深层监听，因为依赖数组已直接关联note
 );
@@ -1046,6 +1075,7 @@ td input {
         justify-content: space-between;
         flex-wrap: wrap;
         gap: 8px;
+        display: none;
     }
     
     .vocabulary-app {
@@ -1067,6 +1097,7 @@ td input {
         flex-direction: column;
         align-items: stretch;
         gap: 10px;
+        display: none;
     }
     
     .import-export-buttons,
