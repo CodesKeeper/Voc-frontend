@@ -32,7 +32,8 @@ const updateWordCount = (count) => {
 <style>
 #app {
     width: 100%;
-    min-height: 100vh;
+    min-width: 660px;
+    /* min-height: 100vh; */
     transition: background-color 0.3s;
 }
 

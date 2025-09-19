@@ -57,14 +57,19 @@ body.dark-theme {
 }
 
 /* 强制应用页面背景色 */
+html {
+    min-width: 660px !important;
+}
+
 body {
     margin: 0;
     display: flex;
     place-items: center;
-    min-width: 320px;
+    min-width: 660px;
     min-height: 100vh;
     transition: all 0.3s ease;
     background-color: var(--background-color);
+    overflow-x: auto;
 }
 
 /* 导航栏样式增强 */

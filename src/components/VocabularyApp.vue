@@ -830,6 +830,7 @@ span {
 
 
 
+
 /* 现代简约导航栏 */
 .nav-bar {
     position: fixed;
@@ -1114,13 +1115,6 @@ td input {
     margin-left: 10px;
 }
 
-/* 确保在屏幕不够宽时隐藏侧边栏，避免出现横向滚动条 */
-@media (max-width: 1480px) {
-    .word-count-sidebar {
-        display: none;
-    }
-}
-
 /* 特殊范围：660px-768px，word-count-sidebar在导航栏和主内容之间 */
 @media (min-width: 660px) and (max-width: 1770px) {
     .word-count-sidebar {
@@ -1131,6 +1125,13 @@ td input {
         margin: 15px auto 0;
         right: auto;
         top: auto;
+    }
+}
+
+/* 确保在屏幕不够宽时隐藏侧边栏，避免出现横向滚动条 */
+@media (max-width: 1480px) {
+    .word-count-sidebar {
+        display: none;
     }
 }
 
