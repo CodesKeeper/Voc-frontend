@@ -15,7 +15,7 @@
                 <div class="controls">
                     <div class="import-export-buttons">
                         <button class="import-export-btn">
-                            <RouterLink to="/convert">格式转换</RouterLink>
+                            <RouterLink to="/convert" class="convert-link">格式转换</RouterLink>
                         </button>
                         <ExportBtn :allWords="allWords" :masteredWords="masteredWords" :difficultWords="difficultWords"/>
                         <ImportBtn @import-all-data="handleImport"/>
@@ -51,53 +51,63 @@
                 </div>
             </div>
         </nav>
-        <div class="word-table">
-            <div class="word-table-container">
-                <!-- 表格头部保持固定 -->
-                <div class="table-header">
-                    <div class="header-cell">单词</div>
-                    <div class="header-cell">释义</div>
-                    <div class="header-cell">助记</div>
-                    <div class="header-cell">操作</div>
-                </div>
+        
+        <!-- 单词数统计 - 在导航栏和主内容之间 -->
+        <transition name="fade">
+            <div class="word-count-sidebar" v-if="currentWords.length > 0">
+                📚 当前标签页单词数：{{ currentWords.length }}
+            </div>
+        </transition>
+        
+        <div class="main-content">
+            <div class="word-table">
+                <div class="word-table-container">
+                    <!-- 表格头部保持固定 -->
+                    <div class="table-header">
+                        <div class="header-cell">单词</div>
+                        <div class="header-cell">释义</div>
+                        <div class="header-cell">助记</div>
+                        <div class="header-cell">操作</div>
+                    </div>
 
-                <!-- 虚拟滚动容器 -->
-                <RecycleScroller class="virtual-scroller" :items="currentWords" :item-size="60" key-field="id">
-                    <!-- 每个单词项的模板 -->
-                    <template #default="{ item: word }">
-                        <div class="word-row">
-                            <div class="word-cell">{{ word.word }}</div>
-                            <div class="meaning-cell" :class="{ 'blurred': word.isBlurred }" @click="toggleWordBlur(word)">
-                                {{ word.meaning }}
+                    <!-- 虚拟滚动容器 -->
+                    <RecycleScroller class="virtual-scroller" :items="currentWords" :item-size="60" key-field="id">
+                        <!-- 每个单词项的模板 -->
+                        <template #default="{ item: word }">
+                            <div class="word-row">
+                                <div class="word-cell">{{ word.word }}</div>
+                                <div class="meaning-cell" :class="{ 'blurred': word.isBlurred }" @click="toggleWordBlur(word)">
+                                    {{ word.meaning }}
+                                </div>
+                                <div class="note-cell">
+                                    <input type="text" v-model="word.note" placeholder="添加助记..." class="note-input">
+                                </div>
+                                <div class="action-cell">
+                                    <template v-if="currentTab === 'all'">
+                                        <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
+                                        <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
+                                        <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
+                                    </template>
+                                    <template v-else-if="currentTab === 'mastered'">
+                                        <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
+                                        <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
+                                        <button @click="moveWord(word, 'all')" title="移回全部" class="action-btn">↩</button>
+                                    </template>
+                                    <template v-else-if="currentTab === 'multiMeaning'">
+                                        <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
+                                        <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
+                                        <button @click="moveWord(word, 'all')" title="移回全部" class="action-btn">↩</button>
+                                    </template>
+                                    <template v-else>
+                                        <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
+                                        <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
+                                        <button @click="moveWord(word, 'all')" title="移回全部" class="action-btn">↩</button>
+                                    </template>
+                                </div>
                             </div>
-                            <div class="note-cell">
-                                <input type="text" v-model="word.note" placeholder="添加助记..." class="note-input">
-                            </div>
-                            <div class="action-cell">
-                                <template v-if="currentTab === 'all'">
-                                    <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
-                                    <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
-                                    <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
-                                </template>
-                                <template v-else-if="currentTab === 'mastered'">
-                                    <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
-                                    <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
-                                    <button @click="moveWord(word, 'all')" title="移回全部" class="action-btn">↩</button>
-                                </template>
-                                <template v-else-if="currentTab === 'multiMeaning'">
-                                    <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
-                                    <button @click="moveWord(word, 'difficult')" title="移到难记" class="action-btn">★</button>
-                                    <button @click="moveWord(word, 'all')" title="移回全部" class="action-btn">↩</button>
-                                </template>
-                                <template v-else>
-                                    <button @click="moveWord(word, 'mastered')" title="移到熟记" class="action-btn"><span>❌</span></button>
-                                    <button @click="moveWord(word, 'multiMeaning')" title="移到多义" class="action-btn">🔀</button>
-                                    <button @click="moveWord(word, 'all')" title="移回全部" class="action-btn">↩</button>
-                                </template>
-                            </div>
-                        </div>
-                    </template>
-                </RecycleScroller>
+                        </template>
+                    </RecycleScroller>
+                </div>
             </div>
         </div>
     </div>
@@ -549,32 +559,85 @@ const handleImport = (data) => {
 
 </script>
 
-<style>
+<style scoped lang="scss">
+
 /* 现代滚动条样式 */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    // height: 80px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--page-bg-color);
+    background: var(--scrollbar-color);
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--primary-light);
+    background: var(--scrollbar-thumb-color);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--button-text-color);
+    background: var(--scrollbar-thumb-hover-color);
 }
-a {
+
+.convert-link {
     text-decoration: none;
     color: var(--button-text-color);
 }
-</style>
 
-<style scoped>
+/* 主内容区域布局 */
+.main-content {
+    width: 1200px;
+    margin: 0 auto;
+    position: relative;
+}
+
+.word-table {
+    margin-top: 10px;
+    // background-color: var(--table-bg-color);
+    // border-radius: 80px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* 单词数统计侧边栏 - 浮动在main-content右边 */
+.word-count-sidebar {
+    width: 220px;
+    min-width: 200px;
+    height: fit-content;
+    padding: 12px 16px;
+    border-radius: 12px;
+    background-color: var(--primary-color);
+    color: white;
+    font-size: 1rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: default;
+    position: fixed;
+    top: 90px;
+    right: calc((100vw - 1200px) / 2 - 300px);
+    z-index: 5;
+}
+
+
+.word-count-sidebar:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* 淡入淡出动画 */
+.fade-enter-active, .fade-leave-active {
+    transition: all 0.3s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+    opacity: 0;
+    transform: translateX(20px);
+}
 
 .word-table-container {
   width: 100%;
@@ -759,17 +822,13 @@ span {
 .vocabulary-app {
     width: 100%;
     max-width: 1200px;
+    min-width: 660px;
     margin: 0 auto;
     padding-top: 65px;
     background-color: var(--page-bg-color);
 }
 
-.word-table {
-    margin-top: 10px;
-    background-color: var(--table-bg-color);
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
+
 
 /* 现代简约导航栏 */
 .nav-bar {
@@ -1055,6 +1114,41 @@ td input {
     margin-left: 10px;
 }
 
+/* 确保在屏幕不够宽时隐藏侧边栏，避免出现横向滚动条 */
+@media (max-width: 1480px) {
+    .word-count-sidebar {
+        display: none;
+    }
+}
+
+/* 特殊范围：660px-768px，word-count-sidebar在导航栏和主内容之间 */
+@media (min-width: 660px) and (max-width: 1770px) {
+    .word-count-sidebar {
+        display: flex;
+        position: static;
+        width: 100%;
+        max-width: 400px;
+        margin: 15px auto 0;
+        right: auto;
+        top: auto;
+    }
+}
+
+@media (max-width: 1215px) {
+    .main-content {
+        width: 95%;
+        padding: 0 10px;
+    }
+    
+    .word-count-sidebar {
+        right: calc((100vw - 95%) / 2 - 250px);
+    }
+
+    .import-export-buttons{
+        display: none;
+    }
+}
+
 /* 响应式设计 - 小屏幕优化 */
 @media (max-width: 1024px) {
     .nav-bar-content {
@@ -1079,7 +1173,20 @@ td input {
     }
     
     .vocabulary-app {
-        padding-top: 120px; /* 增加顶部间距适应更高的导航栏 */
+        padding-top: 76px; /* 增加顶部间距适应更高的导航栏 */
+    }
+    
+    .main-content {
+        width: 100%;
+        padding: 0 20px;
+    }
+    
+    .word-count-sidebar {
+        position: static;
+        width: 100%;
+        margin: 15px auto 0;
+        right: auto;
+        top: auto;
     }
 }
 
@@ -1108,9 +1215,13 @@ td input {
     }
     
     .vocabulary-app {
-        padding-top: 160px; /* 进一步增加顶部间距 */
+        padding-top: 76px; /* 进一步增加顶部间距 */
         padding-left: 10px;
         padding-right: 10px;
+    }
+    
+    .main-content {
+        padding: 0 10px;
     }
     
     .word-table-container {
@@ -1127,6 +1238,14 @@ td input {
     .note-input {
         padding: 4px 6px;
         font-size: 0.8rem;
+    }
+    
+    .word-count-sidebar {
+        font-size: 0.9rem;
+        padding: 10px 14px;
+        width: 100%;
+        min-width: auto;
+        margin: 10px auto 0;
     }
 }
 
@@ -1156,7 +1275,12 @@ td input {
     }
     
     .vocabulary-app {
-        padding-top: 180px;
+        padding-top: 76px;
+    }
+    
+    .word-count-sidebar {
+        font-size: 0.85rem;
+        padding: 8px 12px;
     }
 }
 </style>

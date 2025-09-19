@@ -18,8 +18,9 @@
     --primary-color: #646cff;          /* 标签页选颜色 */
     --primary-hover-color: #a0ec88;    /* 导入导出按钮颜色 */
     --table-bg-color: #dddddd;         /* 单词表背景色 */
-    --page-bg-color: #e7e7e7;          /* 单词表背景及右侧滑块颜色 */
-    --background-color: ##f9fafb;       /* 页面背景色 */
+    --scrollbar-color: #e7e7e7;        /* 单词表背景及右侧滑块颜色 */
+    --page-bg-color: #e7e7e7;          /* 页面背景色 */
+    --background-color: ##f9fafb;        /* 页面背景色 */
     --text-color: #3b3b3b;             /* 单词颜色 */
     --text-secondary-color: #666666;   /* 次要文本颜色 */
     --border-color: #5f615f;           /* 边框颜色 */
@@ -29,6 +30,8 @@
     --success-color: #4CAF50;          /* 成功状态颜色 */
     --error-color: #f44336;            /* 错误状态颜色 */
     --disabled-color: #9e9e9e;         /* 禁用状态颜色 */
+    --scrollbar-thumb-color: #17171a;    /* 滑块颜色 */
+    --scrollbar-thumb-hover-color: #2c2c34; /* 滑块hover颜色 */
 }
 
 /* 暗黑主题 */
@@ -36,7 +39,8 @@ body.dark-theme {
     --primary-color: #6d8fd6;          /* 标签页选颜色 */
     --primary-hover-color: #5552ee;    /* 导入导出按钮颜色 */
     --table-bg-color: #333333;         /* 单词表背景色 */
-    --page-bg-color: #353333;          /* 单词表背景及右侧滑块颜色 */
+    --scrollbar-color: #353333;        /* 及右侧滑块颜色 */
+    --page-bg-color: #353333;          /* 页面背景色 */
     --background-color: #1a1a1a;       /* 页面背景色 */
     --text-color: #e0e0e0;             /* 单词颜色 */
     --text-secondary-color: #a0a0a0;   /* 次要文本颜色 */
@@ -48,6 +52,8 @@ body.dark-theme {
     --success-color: #66bb6a;          /* 成功状态颜色 */
     --error-color: #ef5350;            /* 错误状态颜色 */
     --disabled-color: #616161;         /* 禁用状态颜色 */
+    --scrollbar-thumb-color: #3c445e;  /* 滑块颜色 */
+    --scrollbar-thumb-hover-color: #2c2c34; /* 滑块hover颜色 */
 }
 
 /* 强制应用页面背景色 */

@@ -20,6 +20,7 @@
     "element-plus": "^2.10.5",
     "lodash": "^4.17.21",
     "pinia": "^3.0.3",
+    "sass-embedded": "^1.92.1",
     "vite": "^6.3.5"
   }
 }
